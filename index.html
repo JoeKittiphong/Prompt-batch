@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องมือรวมคำ (พร้อม Checkbox)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            place-items: center;
+            min-height: 90vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px; /* ขยายความกว้างเล็กน้อย */
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box; 
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button#generateButton {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button#generateButton:hover {
+            background-color: #0056b3;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 20px 0;
+        }
+
+        /* --- CSS ส่วนที่ปรับใหม่ --- */
+        #outputContainer {
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            max-height: 300px; /* จำกัดความสูงถ้าผลลัพธ์เยอะ */
+            overflow-y: auto; /* เพิ่ม Scrollbar ถ้ายาวเกิน */
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #fff;
+            transition: background-color 0.2s;
+        }
+        .result-item:last-child {
+            border-bottom: none; /* บรรทัดสุดท้ายไม่ต้องมีเส้นคั่น */
+        }
+
+        .result-item input[type="checkbox"] {
+            margin-right: 12px;
+            /* ทำให้ checkbox ใหญ่ขึ้นเล็กน้อย */
+            transform: scale(1.2); 
+            cursor: pointer;
+        }
+
+        .result-text {
+            flex-grow: 1; /* ใช้พื้นที่ที่เหลือทั้งหมด */
+            font-family: Consolas, "Courier New", monospace; /* ใช้ font แบบ fixed-width ให้อ่านง่าย */
+            font-size: 15px;
+            color: #333;
+        }
+
+        /* เมื่อติ๊กถูก ข้อความจะจางลง */
+        .result-item input[type="checkbox"]:checked + .result-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .copy-button {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            opacity: 0.8;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        .copy-button:hover {
+            opacity: 1;
+            background-color: #5a6268;
+        }
+
+        /* เมื่อติ๊กถูก ปุ่มคัดลอกจะเปลี่ยนสี */
+        .result-item input[type="checkbox"]:checked ~ .copy-button {
+             background-color: #28a745; /* สีเขียว */
+             opacity: 1;
+        }
+        /* --- จบส่วน CSS ที่ปรับใหม่ --- */
+
+
+        .feedback {
+            display: none; 
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333; /* เปลี่ยนเป็นสีเข้ม */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-weight: 500;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>เครื่องมือรวมคำ (Word Combiner)</h2>
+        
+        <div class="form-group">
+            <label for="prefixInput">คำนำหน้า (Prefix):</label>
+            <input type="text" id="prefixInput" placeholder="เช่น SKU_2024_">
+        </div>
+        
+        <div class="form-group">
+            <label for="suffixInput">คำต่อท้าย (คั่นด้วย ,):</label>
+            <input type="text" id="suffixInput" placeholder="เช่น 001,002,003,ABC">
+        </div>
+        
+        <button id="generateButton">สร้างผลลัพธ์</button>
+        
+        <hr>
+        
+        <h3>ผลลัพธ์ (คลิกปุ่มเพื่อคัดลอก):</h3>
+        <div id="outputContainer">
+            </div>
+    </div>
+
+    <div id="copyFeedback" class="feedback">คัดลอกแล้ว!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const prefixInput = document.getElementById('prefixInput');
+            const suffixInput = document.getElementById('suffixInput');
+            const generateButton = document.getElementById('generateButton');
+            const outputContainer = document.getElementById('outputContainer');
+            const copyFeedback = document.getElementById('copyFeedback');
+            let feedbackTimeout; 
+
+            generateButton.addEventListener('click', () => {
+                
+                const prefix = prefixInput.value;
+                const suffixesString = suffixInput.value;
+
+                outputContainer.innerHTML = ''; // ล้างผลลัพธ์เก่า
+
+                const suffixArray = suffixesString.split(',')
+                                                .map(s => s.trim())
+                                                .filter(s => s.length > 0);
+
+                // --- ส่วน JavaScript ที่ปรับใหม่ ---
+                suffixArray.forEach((suffix, index) => {
+                    const combinedText = prefix + suffix;
+
+                    // 1. สร้าง div ครอบ (result-item)
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'result-item';
+
+                    // 2. สร้าง Checkbox
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    // สร้าง id ที่ไม่ซ้ำกันสำหรับ checkbox
+                    checkbox.id = `cb-${index}`; 
+
+                    // 3. สร้างข้อความ (ใช้ span เพื่อจัดสไตล์)
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'result-text';
+                    textSpan.textContent = combinedText;
+                    
+                    // 4. สร้างปุ่มคัดลอก
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-button';
+                    copyBtn.textContent = 'คัดลอก';
+
+                    // 5. ประกอบร่าง
+                    itemDiv.appendChild(checkbox);
+                    itemDiv.appendChild(textSpan);
+                    itemDiv.appendChild(copyBtn);
+
+                    // 6. เพิ่ม Event Listener ให้ปุ่ม "คัดลอก"
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(combinedText)
+                            .then(() => {
+                                showFeedback(`คัดลอก "${combinedText}" แล้ว!`);
+                                // ติ๊กถูกที่ checkbox ให้เลยอัตโนมัติ
+                                checkbox.checked = true; 
+                            })
+                            .catch(err => {
+                                console.error('ไม่สามารถคัดลอกได้: ', err);
+                                alert('การคัดลอกล้มเหลว');
+                            });
+                    });
+                    
+                    // 7. นำ item ใหม่ไปแปะใน Container
+                    outputContainer.appendChild(itemDiv);
+                });
+                // --- จบส่วน JavaScript ที่ปรับใหม่ ---
+            });
+
+            function showFeedback(message) {
+                if (feedbackTimeout) {
+                    clearTimeout(feedbackTimeout);
+                }
+                
+                copyFeedback.textContent = message;
+                copyFeedback.style.display = 'block'; 
+                
+                feedbackTimeout = setTimeout(() => {
+                    copyFeedback.style.display = 'none'; 
+                }, 2000);
+            }
+        });
+    </script>
+
+</body>
+</html>
