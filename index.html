@@ -16,7 +16,7 @@
         }
         .container {
             width: 100%;
-            max-width: 600px; /* ขยายความกว้างเล็กน้อย */
+            max-width: 600px;
             background: #ffffff;
             padding: 25px;
             border-radius: 12px;
@@ -43,11 +43,13 @@
             border: 1px solid #ccc;
             border-radius: 6px;
         }
-        button#generateButton {
-            width: 100%;
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
             padding: 12px;
-            background-color: #007bff;
-            color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
@@ -55,24 +57,32 @@
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        button#generateButton:hover {
+        #generateButton {
+            background-color: #007bff;
+            color: white;
+        }
+        #generateButton:hover {
             background-color: #0056b3;
+        }
+        #clearButton {
+            background-color: #dc3545;
+            color: white;
+        }
+        #clearButton:hover {
+            background-color: #a71d2a;
         }
         hr {
             border: none;
             border-top: 1px solid #eee;
             margin: 20px 0;
         }
-
-        /* --- CSS ส่วนที่ปรับใหม่ --- */
         #outputContainer {
             margin-top: 15px;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
-            max-height: 300px; /* จำกัดความสูงถ้าผลลัพธ์เยอะ */
-            overflow-y: auto; /* เพิ่ม Scrollbar ถ้ายาวเกิน */
+            max-height: 300px;
+            overflow-y: auto;
         }
-
         .result-item {
             display: flex;
             align-items: center;
@@ -82,29 +92,30 @@
             transition: background-color 0.2s;
         }
         .result-item:last-child {
-            border-bottom: none; /* บรรทัดสุดท้ายไม่ต้องมีเส้นคั่น */
+            border-bottom: none;
         }
-
         .result-item input[type="checkbox"] {
             margin-right: 12px;
-            /* ทำให้ checkbox ใหญ่ขึ้นเล็กน้อย */
             transform: scale(1.2); 
             cursor: pointer;
         }
-
+        .result-index {
+            width: 30px;
+            text-align: right;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #666;
+        }
         .result-text {
-            flex-grow: 1; /* ใช้พื้นที่ที่เหลือทั้งหมด */
-            font-family: Consolas, "Courier New", monospace; /* ใช้ font แบบ fixed-width ให้อ่านง่าย */
+            flex-grow: 1;
+            font-family: Consolas, "Courier New", monospace;
             font-size: 15px;
             color: #333;
         }
-
-        /* เมื่อติ๊กถูก ข้อความจะจางลง */
-        .result-item input[type="checkbox"]:checked + .result-text {
+        .result-item input[type="checkbox"]:checked + .result-index + .result-text {
             text-decoration: line-through;
             color: #999;
         }
-
         .copy-button {
             padding: 5px 10px;
             font-size: 12px;
@@ -121,22 +132,17 @@
             opacity: 1;
             background-color: #5a6268;
         }
-
-        /* เมื่อติ๊กถูก ปุ่มคัดลอกจะเปลี่ยนสี */
         .result-item input[type="checkbox"]:checked ~ .copy-button {
-             background-color: #28a745; /* สีเขียว */
+             background-color: #28a745;
              opacity: 1;
         }
-        /* --- จบส่วน CSS ที่ปรับใหม่ --- */
-
-
         .feedback {
             display: none; 
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #333; /* เปลี่ยนเป็นสีเข้ม */
+            background-color: #333;
             color: white;
             padding: 10px 20px;
             border-radius: 6px;
@@ -161,97 +167,138 @@
             <input type="text" id="suffixInput" placeholder="เช่น 001,002,003,ABC">
         </div>
         
-        <button id="generateButton">สร้างผลลัพธ์</button>
+        <div class="button-row">
+            <button id="generateButton">สร้างผลลัพธ์</button>
+            <button id="clearButton">ล้างทั้งหมด</button>
+        </div>
         
         <hr>
         
         <h3>ผลลัพธ์ (คลิกปุ่มเพื่อคัดลอก):</h3>
-        <div id="outputContainer">
-            </div>
+        <div id="outputContainer"></div>
     </div>
 
     <div id="copyFeedback" class="feedback">คัดลอกแล้ว!</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-
             const prefixInput = document.getElementById('prefixInput');
             const suffixInput = document.getElementById('suffixInput');
             const generateButton = document.getElementById('generateButton');
+            const clearButton = document.getElementById('clearButton');
             const outputContainer = document.getElementById('outputContainer');
             const copyFeedback = document.getElementById('copyFeedback');
-            let feedbackTimeout; 
+            let feedbackTimeout;
 
+            // โหลดข้อมูลเก่า
+            const savedPrefix = localStorage.getItem('prefix');
+            const savedSuffix = localStorage.getItem('suffix');
+            const savedChecked = JSON.parse(localStorage.getItem('checkedItems') || '{}');
+
+            if (savedPrefix) prefixInput.value = savedPrefix;
+            if (savedSuffix) suffixInput.value = savedSuffix;
+
+            if (savedPrefix && savedSuffix) {
+                const suffixArray = savedSuffix.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                generateList(savedPrefix, suffixArray, savedChecked);
+            }
+
+            // สร้างผลลัพธ์ใหม่
             generateButton.addEventListener('click', () => {
-                
                 const prefix = prefixInput.value;
                 const suffixesString = suffixInput.value;
+                const suffixArray = suffixesString.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                
+                localStorage.setItem('prefix', prefix);
+                localStorage.setItem('suffix', suffixesString);
+                localStorage.setItem('checkedItems', JSON.stringify({}));
 
-                outputContainer.innerHTML = ''; // ล้างผลลัพธ์เก่า
+                generateList(prefix, suffixArray, {});
+            });
 
-                const suffixArray = suffixesString.split(',')
-                                                .map(s => s.trim())
-                                                .filter(s => s.length > 0);
+            // อัปเดต prefix แบบ real-time
+            prefixInput.addEventListener('input', () => {
+                const prefix = prefixInput.value;
+                localStorage.setItem('prefix', prefix);
 
-                // --- ส่วน JavaScript ที่ปรับใหม่ ---
+                const suffixesString = suffixInput.value;
+                const suffixArray = suffixesString.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                const savedChecked = JSON.parse(localStorage.getItem('checkedItems') || '{}');
+                
+                generateList(prefix, suffixArray, savedChecked);
+            });
+
+            // ปุ่มเคลียร์ทั้งหมด
+            clearButton.addEventListener('click', () => {
+                prefixInput.value = '';
+                suffixInput.value = '';
+                outputContainer.innerHTML = '';
+                localStorage.removeItem('prefix');
+                localStorage.removeItem('suffix');
+                localStorage.removeItem('checkedItems');
+                showFeedback('ล้างข้อมูลทั้งหมดแล้ว');
+            });
+
+            // ฟังก์ชันสร้างผลลัพธ์
+            function generateList(prefix, suffixArray, checkedItems) {
+                outputContainer.innerHTML = '';
                 suffixArray.forEach((suffix, index) => {
                     const combinedText = prefix + suffix;
 
-                    // 1. สร้าง div ครอบ (result-item)
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'result-item';
 
-                    // 2. สร้าง Checkbox
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    // สร้าง id ที่ไม่ซ้ำกันสำหรับ checkbox
-                    checkbox.id = `cb-${index}`; 
+                    checkbox.id = `cb-${index}`;
+                    checkbox.checked = !!checkedItems[suffix];
 
-                    // 3. สร้างข้อความ (ใช้ span เพื่อจัดสไตล์)
+                    const indexSpan = document.createElement('span');
+                    indexSpan.className = 'result-index';
+                    indexSpan.textContent = (index + 1) + '.';
+
                     const textSpan = document.createElement('span');
                     textSpan.className = 'result-text';
                     textSpan.textContent = combinedText;
-                    
-                    // 4. สร้างปุ่มคัดลอก
+
                     const copyBtn = document.createElement('button');
                     copyBtn.className = 'copy-button';
                     copyBtn.textContent = 'คัดลอก';
 
-                    // 5. ประกอบร่าง
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(combinedText).then(() => {
+                            showFeedback(`คัดลอก "${combinedText}" แล้ว!`);
+                            checkbox.checked = true;
+                            saveCheckedStatus(suffix, true);
+                        });
+                    });
+
+                    checkbox.addEventListener('change', () => {
+                        saveCheckedStatus(suffix, checkbox.checked);
+                    });
+
                     itemDiv.appendChild(checkbox);
+                    itemDiv.appendChild(indexSpan);
                     itemDiv.appendChild(textSpan);
                     itemDiv.appendChild(copyBtn);
-
-                    // 6. เพิ่ม Event Listener ให้ปุ่ม "คัดลอก"
-                    copyBtn.addEventListener('click', () => {
-                        navigator.clipboard.writeText(combinedText)
-                            .then(() => {
-                                showFeedback(`คัดลอก "${combinedText}" แล้ว!`);
-                                // ติ๊กถูกที่ checkbox ให้เลยอัตโนมัติ
-                                checkbox.checked = true; 
-                            })
-                            .catch(err => {
-                                console.error('ไม่สามารถคัดลอกได้: ', err);
-                                alert('การคัดลอกล้มเหลว');
-                            });
-                    });
-                    
-                    // 7. นำ item ใหม่ไปแปะใน Container
                     outputContainer.appendChild(itemDiv);
                 });
-                // --- จบส่วน JavaScript ที่ปรับใหม่ ---
-            });
+            }
 
+            // บันทึกสถานะ checkbox
+            function saveCheckedStatus(suffix, isChecked) {
+                const checkedItems = JSON.parse(localStorage.getItem('checkedItems') || '{}');
+                checkedItems[suffix] = isChecked;
+                localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
+            }
+
+            // แสดงข้อความสถานะ
             function showFeedback(message) {
-                if (feedbackTimeout) {
-                    clearTimeout(feedbackTimeout);
-                }
-                
+                if (feedbackTimeout) clearTimeout(feedbackTimeout);
                 copyFeedback.textContent = message;
-                copyFeedback.style.display = 'block'; 
-                
+                copyFeedback.style.display = 'block';
                 feedbackTimeout = setTimeout(() => {
-                    copyFeedback.style.display = 'none'; 
+                    copyFeedback.style.display = 'none';
                 }, 2000);
             }
         });
