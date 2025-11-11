@@ -3,55 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Word Combiner (Toggle Strike + Hide Inputs)</title>
+<title>Word Combiner (หลาย Prefix + Toggle Strike)</title>
 <style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f6; margin:0; padding:20px; display:grid; place-items:center; min-height:90vh; }
-.container { width:100%; max-width:600px; background:white; padding:25px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f4f7f6; margin:0; padding:20px;
+  display:grid; place-items:center; min-height:90vh;
+}
+.container {
+  width:100%; max-width:680px;
+  background:white; padding:25px;
+  border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05);
+}
 h2 { text-align:center; color:#333; margin-top:0; }
-.form-group { margin-bottom:15px; }
-.form-group label { display:block; margin-bottom:5px; font-weight:600; color:#555; }
-.form-group input[type="text"] { width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
-.button-row { display:flex; gap:10px; flex-wrap:wrap; }
-button { flex:1; padding:12px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.2s; }
+
+.form-group { margin-bottom:20px; }
+label { display:block; margin-bottom:6px; font-weight:600; color:#555; }
+
+input[type="text"], select {
+  width:100%; padding:14px;
+  border:1px solid #ccc; border-radius:8px;
+  font-size:16px; box-sizing:border-box;
+}
+.button-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+button {
+  flex:1; padding:12px; border:none;
+  border-radius:6px; font-size:15px;
+  font-weight:600; cursor:pointer; transition:0.2s;
+}
+button:hover { opacity:0.9; }
+
 #generateButton { background-color:#007bff; color:white; }
-#generateButton:hover { background-color:#0056b3; }
 #clearButton { background-color:#dc3545; color:white; }
-#clearButton:hover { background-color:#a71d2a; }
 .small-btn { background-color:#ffc107; color:#333; flex:0.4; }
-.small-btn:hover { background-color:#e0a800; }
-hr { border:none; border-top:1px solid #eee; margin:20px 0; }
-#outputContainer { margin-top:15px; border:1px solid #e0e0e0; border-radius:6px; max-height:300px; overflow-y:auto; }
-.result-item { display:flex; align-items:center; padding:10px 12px; border-bottom:1px solid #f0f0f0; background:#fff; transition:0.2s; }
-.result-item:last-child { border-bottom:none; }
-.result-item input[type="checkbox"] { margin-right:12px; transform:scale(1.2); cursor:pointer; }
-.result-index { width:30px; text-align:right; margin-right:10px; font-weight:bold; color:#666; }
-.result-text { flex-grow:1; font-family:Consolas, "Courier New", monospace; font-size:15px; color:#333; cursor:pointer; user-select:none; }
-.result-text.strike { text-decoration: line-through; color: #999; }
-.copy-button { padding:5px 10px; font-size:12px; background:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer; margin-left:10px; opacity:0.8; transition:0.2s; }
-.copy-button:hover { opacity:1; background:#5a6268; }
-.feedback { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:10px 20px; border-radius:6px; box-shadow:0 4px 10px rgba(0,0,0,0.1); font-weight:500; z-index:1000; }
-#combinedArea { width:100%; height:100px; margin-top:15px; }
 #combineButton { background:#28a745; color:white; }
-#combineButton:hover { background:#218838; }
 #copyAllButton { background:#17a2b8; color:white; margin-top:5px; }
-#copyAllButton:hover { background:#117a8b; }
 #toggleInputsBtn { background:#6f42c1; color:white; margin-bottom:10px; }
-#toggleInputsBtn:hover { background:#5936a2; }
+#togglePrefixGroupBtn { background:#20c997; color:white; margin-bottom:10px; }
+#addPrefixBtn { background:#198754; color:white; flex:1; }
+#deletePrefixBtn { background:#dc3545; color:white; flex:0.4; }
+
+hr { border:none; border-top:1px solid #eee; margin:20px 0; }
+
+#outputContainer {
+  margin-top:15px; border:1px solid #e0e0e0;
+  border-radius:6px; max-height:300px; overflow-y:auto;
+}
+
+.result-item {
+  display:flex; align-items:center;
+  padding:10px 12px; border-bottom:1px solid #f0f0f0;
+}
+.result-item:last-child { border-bottom:none; }
+.result-item input[type="checkbox"] {
+  margin-right:12px; transform:scale(1.2); cursor:pointer;
+}
+.result-index { width:30px; text-align:right; margin-right:10px; font-weight:bold; color:#666; }
+.result-text {
+  flex-grow:1; font-family:Consolas, monospace;
+  font-size:15px; color:#333; cursor:pointer; user-select:none;
+}
+.result-text.strike { text-decoration: line-through; color:#999; }
+
+.copy-button {
+  padding:5px 10px; font-size:12px;
+  background:#6c757d; color:white;
+  border:none; border-radius:5px; cursor:pointer;
+  margin-left:10px;
+}
+
+.feedback {
+  display:none; position:fixed; bottom:20px; left:50%;
+  transform:translateX(-50%);
+  background:#333; color:white;
+  padding:10px 20px; border-radius:6px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  font-weight:500; z-index:1000;
+}
+#combinedArea {
+  width:100%; height:100px; margin-top:15px;
+  font-size:15px; padding:10px; border-radius:8px;
+  border:1px solid #ccc; resize:none;
+}
 </style>
 </head>
 <body>
 <div class="container">
 
-<h2>Word Combiner (Toggle Strike + Hide Inputs)</h2>
+<h2>Word Combiner (หลาย Prefix + Toggle Strike)</h2>
 
-<button id="toggleInputsBtn">ซ่อน/แสดง การกรอก Prefix & Suffix</button>
+<button id="toggleInputsBtn">ซ่อน/แสดง การกรอกทั้งหมด</button>
 
 <div id="inputsContainer">
-  <div class="form-group">
-      <label>คำนำหน้า (Prefix):</label>
+
+  <button id="togglePrefixGroupBtn">ซ่อน/แสดง การจัดการ Prefix</button>
+  <div id="prefixGroup" class="form-group">
+      <label>เลือกรายการ Prefix:</label>
+      <select id="prefixSelect"></select>
+
       <div class="button-row">
-          <input type="text" id="prefixInput" placeholder="เช่น SKU_2024_">
-          <button class="small-btn" id="clearPrefix">ล้าง</button>
+          <input type="text" id="prefixLabel" placeholder="ชื่อ prefix เช่น 'SKU ญี่ปุ่น'">
+          <input type="text" id="prefixValue" placeholder="ค่า prefix เช่น SKU_JP_">
+      </div>
+
+      <div class="button-row">
+          <button id="addPrefixBtn">➕ เพิ่ม Prefix</button>
+          <button id="deletePrefixBtn">🗑️ ลบ Prefix</button>
       </div>
   </div>
 
@@ -83,70 +140,105 @@ hr { border:none; border-top:1px solid #eee; margin:20px 0; }
 <div id="copyFeedback" class="feedback">คัดลอกแล้ว!</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const prefixInput = document.getElementById('prefixInput');
+document.addEventListener('DOMContentLoaded', ()=>{
+    const prefixSelect = document.getElementById('prefixSelect');
+    const prefixLabel = document.getElementById('prefixLabel');
+    const prefixValue = document.getElementById('prefixValue');
     const suffixInput = document.getElementById('suffixInput');
+    const addPrefixBtn = document.getElementById('addPrefixBtn');
+    const deletePrefixBtn = document.getElementById('deletePrefixBtn');
+    const clearSuffix = document.getElementById('clearSuffix');
     const generateButton = document.getElementById('generateButton');
     const clearButton = document.getElementById('clearButton');
-    const clearPrefix = document.getElementById('clearPrefix');
-    const clearSuffix = document.getElementById('clearSuffix');
     const combineButton = document.getElementById('combineButton');
     const copyAllButton = document.getElementById('copyAllButton');
     const combinedArea = document.getElementById('combinedArea');
     const outputContainer = document.getElementById('outputContainer');
     const copyFeedback = document.getElementById('copyFeedback');
     const toggleInputsBtn = document.getElementById('toggleInputsBtn');
+    const togglePrefixGroupBtn = document.getElementById('togglePrefixGroupBtn');
+    const prefixGroup = document.getElementById('prefixGroup');
     const inputsContainer = document.getElementById('inputsContainer');
     let feedbackTimeout;
 
-    // toggle show/hide inputs
     toggleInputsBtn.addEventListener('click', ()=>{
-        if(inputsContainer.style.display==='none'){
-            inputsContainer.style.display='block';
-        }else{
-            inputsContainer.style.display='none';
-        }
+        inputsContainer.style.display = inputsContainer.style.display === 'none' ? 'block' : 'none';
     });
 
-    // โหลดข้อมูลเก่า
-    const savedPrefix = localStorage.getItem('prefix');
-    const savedSuffix = localStorage.getItem('suffix');
-    const savedChecked = JSON.parse(localStorage.getItem('checkedItems') || '{}');
+    togglePrefixGroupBtn.addEventListener('click', ()=>{
+        prefixGroup.style.display = prefixGroup.style.display === 'none' ? 'block' : 'none';
+    });
 
-    if (savedPrefix) prefixInput.value = savedPrefix;
-    if (savedSuffix) suffixInput.value = savedSuffix;
-    if (savedPrefix && savedSuffix) {
-        const suffixArray = savedSuffix.split(',').map(s=>s.trim()).filter(s=>s);
-        generateList(savedPrefix, suffixArray, savedChecked);
+    function loadPrefixes(){
+        const saved = JSON.parse(localStorage.getItem('prefixList') || '{}');
+        prefixSelect.innerHTML = '';
+        Object.keys(saved).forEach(label=>{
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            prefixSelect.appendChild(opt);
+        });
+        if(Object.keys(saved).length>0){
+            const firstLabel = prefixSelect.value || Object.keys(saved)[0];
+            prefixSelect.value = firstLabel;
+            prefixLabel.value = firstLabel;
+            prefixValue.value = saved[firstLabel];
+        }
     }
 
-    generateButton.addEventListener('click', () => {
-        const prefix = prefixInput.value;
-        const suffixArray = suffixInput.value.split(',').map(s=>s.trim()).filter(s=>s);
-        localStorage.setItem('prefix', prefix);
-        localStorage.setItem('suffix', suffixInput.value);
-        localStorage.setItem('checkedItems', JSON.stringify({}));
-        generateList(prefix, suffixArray, {});
+    loadPrefixes();
+
+    prefixSelect.addEventListener('change', ()=>{
+        const list = JSON.parse(localStorage.getItem('prefixList')||'{}');
+        const selected = prefixSelect.value;
+        prefixLabel.value = selected;
+        prefixValue.value = list[selected] || '';
     });
 
-    prefixInput.addEventListener('input', () => {
-        const prefix = prefixInput.value;
-        localStorage.setItem('prefix', prefix);
+    addPrefixBtn.addEventListener('click', ()=>{
+        const label = prefixLabel.value.trim();
+        const value = prefixValue.value.trim();
+        if(!label || !value){ showFeedback('กรุณาใส่ชื่อและค่า prefix'); return; }
+        const list = JSON.parse(localStorage.getItem('prefixList')||'{}');
+        list[label] = value;
+        localStorage.setItem('prefixList', JSON.stringify(list));
+        loadPrefixes();
+        showFeedback('เพิ่ม Prefix แล้ว');
+    });
+
+    deletePrefixBtn.addEventListener('click', ()=>{
+        const label = prefixSelect.value;
+        if(!label) return;
+        const list = JSON.parse(localStorage.getItem('prefixList')||'{}');
+        delete list[label];
+        localStorage.setItem('prefixList', JSON.stringify(list));
+        loadPrefixes();
+        showFeedback('ลบ Prefix แล้ว');
+    });
+
+    prefixValue.addEventListener('input', ()=>{
+        const label = prefixSelect.value;
+        if(!label) return;
+        const list = JSON.parse(localStorage.getItem('prefixList')||'{}');
+        list[label] = prefixValue.value;
+        localStorage.setItem('prefixList', JSON.stringify(list));
+    });
+
+    generateButton.addEventListener('click', ()=>{
+        const prefix = prefixValue.value;
         const suffixArray = suffixInput.value.split(',').map(s=>s.trim()).filter(s=>s);
-        const savedChecked = JSON.parse(localStorage.getItem('checkedItems') || '{}');
-        generateList(prefix, suffixArray, savedChecked);
+        generateList(prefix, suffixArray);
     });
 
     clearButton.addEventListener('click', ()=>{
-        prefixInput.value=''; suffixInput.value=''; outputContainer.innerHTML=''; combinedArea.value='';
-        localStorage.clear(); showFeedback('ล้างข้อมูลทั้งหมดแล้ว');
+        suffixInput.value=''; combinedArea.value=''; outputContainer.innerHTML='';
+        showFeedback('ล้างข้อมูลแล้ว');
     });
-    clearPrefix.addEventListener('click', ()=>{ prefixInput.value=''; localStorage.removeItem('prefix'); });
-    clearSuffix.addEventListener('click', ()=>{ suffixInput.value=''; localStorage.removeItem('suffix'); });
+    clearSuffix.addEventListener('click', ()=>{ suffixInput.value=''; });
 
     combineButton.addEventListener('click', ()=>{
         const checked = Array.from(document.querySelectorAll('.selectCheckbox:checked')).map(cb=>cb.dataset.suffix);
-        const prefix = prefixInput.value;
+        const prefix = prefixValue.value;
         if(checked.length===0){ showFeedback('โปรดเลือกผลลัพธ์ก่อน'); return; }
         combinedArea.value = prefix + ', ' + checked.join(', ');
         showFeedback('รวมผลลัพธ์แล้ว');
@@ -157,63 +249,33 @@ document.addEventListener('DOMContentLoaded', () => {
         showFeedback('คัดลอกผลรวมทั้งหมดแล้ว!');
     });
 
-    function generateList(prefix, suffixArray, checkedItems){
+    function generateList(prefix, suffixArray){
         outputContainer.innerHTML='';
         suffixArray.forEach((suffix,index)=>{
             const itemDiv=document.createElement('div'); itemDiv.className='result-item';
-
-            // Checkbox สำหรับรวมผลลัพธ์
             const checkbox=document.createElement('input');
-            checkbox.type='checkbox';
-            checkbox.className='selectCheckbox';
-            checkbox.dataset.suffix=suffix;
-            checkbox.checked=!!checkedItems[suffix];
-
-            // Index
+            checkbox.type='checkbox'; checkbox.className='selectCheckbox'; checkbox.dataset.suffix=suffix;
             const indexSpan=document.createElement('span'); indexSpan.className='result-index'; indexSpan.textContent=(index+1)+'.';
-
-            // Text
-            const textSpan=document.createElement('span'); textSpan.className='result-text'; textSpan.textContent=prefix + suffix;
-
-            // Toggle strike on click
-            textSpan.addEventListener('click', ()=>{
-                textSpan.classList.toggle('strike');
-            });
-
-            // ปุ่มคัดลอกแยก
+            const textSpan=document.createElement('span'); textSpan.className='result-text'; textSpan.textContent=prefix+suffix;
+            textSpan.addEventListener('click', ()=>{ textSpan.classList.toggle('strike'); });
             const copyBtn=document.createElement('button'); copyBtn.className='copy-button'; copyBtn.textContent='คัดลอก';
             copyBtn.addEventListener('click', ()=>{
                 navigator.clipboard.writeText(prefix+suffix).then(()=>{
-                    textSpan.classList.add('strike'); // ทำให้ขีดฆ่าหลังคัดลอก
+                    textSpan.classList.add('strike');
                     showFeedback(`คัดลอก "${prefix+suffix}" แล้ว!`);
                 });
             });
-
-            checkbox.addEventListener('change', ()=>{
-                saveCheckedStatus(suffix,checkbox.checked);
-            });
-
-            itemDiv.appendChild(checkbox);
-            itemDiv.appendChild(indexSpan);
-            itemDiv.appendChild(textSpan);
-            itemDiv.appendChild(copyBtn);
+            itemDiv.append(checkbox,indexSpan,textSpan,copyBtn);
             outputContainer.appendChild(itemDiv);
         });
     }
 
-    function saveCheckedStatus(suffix,isChecked){
-        const checkedItems=JSON.parse(localStorage.getItem('checkedItems')||'{}');
-        checkedItems[suffix]=isChecked;
-        localStorage.setItem('checkedItems',JSON.stringify(checkedItems));
-    }
-
-    function showFeedback(message){
+    function showFeedback(msg){
         if(feedbackTimeout) clearTimeout(feedbackTimeout);
-        copyFeedback.textContent=message;
+        copyFeedback.textContent=msg;
         copyFeedback.style.display='block';
         feedbackTimeout=setTimeout(()=>{ copyFeedback.style.display='none'; },2000);
     }
-
 });
 </script>
 </body>
